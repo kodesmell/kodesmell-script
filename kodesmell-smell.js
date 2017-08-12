@@ -8,13 +8,17 @@ const crypto = require('crypto')
 const co = require('co')
 const prompt = require('co-prompt')
 
-const upload = require('./libs/upload')
+const { createKode } = require('./libs/upload')
 
 const readdir = promisify(fs.readdir)
 const readfile = promisify(fs.readFile)
 const lstat = promisify(fs.lstat)
 const writeFile = promisify(fs.writeFile)
-
+const PROJECT_ROOT = __dirname
+const KODESMELL_PROJECT_NAME = PROJECT_ROOT.split(path.sep).pop()
+const KODESMELL_ROOT = path.resolve(PROJECT_ROOT, '.kodesmell')
+const KODESMELL_CONFIG = path.resolve(KODESMELL_ROOT, 'kodesmell.json')
+const KODESMELL_HASHKEY_CACHE = path.resolve(KODESMELL_ROOT, 'kodesmell_hashes.txt')
 const finds = []
 
 const parser = async function kodeParser(file) {
@@ -51,7 +55,7 @@ const parser = async function kodeParser(file) {
         lineNumber: i,
         line,
         code: text,
-        message: message.trim()
+        message: message.trim(),
       }
 
       return false;
@@ -125,10 +129,13 @@ program
     const parsed = flatten(result)
     
     try {
-      let finals = await inject(parsed)
+      let kodes = await inject(parsed)
       
       console.log('We will push results to kodesmell!')
-      upload(finals)
+      let data = await readfile(KODESMELL_CONFIG, 'utf-8')
+      console.log(data)
+      let { KODESMELL_PROJECT_NAME } = JSON.parse(data)
+      createKode({ kodes, project: KODESMELL_PROJECT_NAME })
     } catch(err) {
       console.error(`injection failed!`);
       console.error(err);

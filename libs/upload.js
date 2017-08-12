@@ -1,19 +1,33 @@
 const { request } = require('graphql-request');
+const ENDPOINT = 'http://localhost:8000/graphql'
 
-// request
-//   .post('http://localhost:8000/graphql')
-//   .set()
-
-module.exports = function upload(variables) {
-  request(
-    'http://localhost:8000/graphql',
-    `mutation NewCode($input: [CodeInput]) {
-      newCode(input: $input) {
+async function createKode(input) {
+  let res = await request(
+    ENDPOINT,
+    `mutation CreateKode($input: CreateKodeInput) {
+      createKode(input: $input) {
         id
       }
     }`,
-    {
-      input: variables
-    }
-  ).then(data => console.log(data))
+    { input }
+  )
+  console.log(res)
+}
+
+async function createProject(input) {
+  const payload = {
+    query: `mutation CreateProject($input: CreateProjectInput) {
+      createProject(input: $input) {
+        id
+      }
+    }`,
+    variables: { input }
+  }
+
+  let res = await request(ENDPOINT, payload.query, payload.variables)
+}
+
+module.exports = {
+  createProject,
+  createKode
 }
