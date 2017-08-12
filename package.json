@@ -9,6 +9,8 @@
     "kodesmell": "./index.js"
   },
   "dependencies": {
-    "commander": "^2.11.0"
+    "chalk": "^2.1.0",
+    "commander": "^2.11.0",
+    "ramda": "^0.24.1"
   }
 }
