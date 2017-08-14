@@ -8,10 +8,10 @@ const crypto = require('crypto')
 const co = require('co')
 const prompt = require('co-prompt')
 
-const { createKode } = require('./libs/upload')
+const { createKodes } = require('./libs/upload')
 
 const readdir = promisify(fs.readdir)
-const readfile = promisify(fs.readFile)
+const readFile = promisify(fs.readFile)
 const lstat = promisify(fs.lstat)
 const writeFile = promisify(fs.writeFile)
 const PROJECT_ROOT = __dirname
@@ -21,9 +21,11 @@ const KODESMELL_CONFIG = path.resolve(KODESMELL_ROOT, 'kodesmell.json')
 const KODESMELL_HASHKEY_CACHE = path.resolve(KODESMELL_ROOT, 'kodesmell_hashes.txt')
 const finds = []
 
-const parser = async function kodeParser(file) {
+const configs = require('./libs/config')
+
+const parser = async function kodeParser(file, project) {
   try {
-    let text = await readfile(file, 'utf-8');
+    let text = await readFile(file, 'utf-8');
     let lines = text.split(`\n`)
     let badcode = false
     let res = []
@@ -36,7 +38,7 @@ const parser = async function kodeParser(file) {
       if (where < 3) return false;
 
       const success = chalk.red.bold
-      console.log(`${success('[Kodesmell]')} ${chalk.hex('#08f').underline(file)} at line number ${i}.`);
+      console.log(`${success('[Smells]')} ${chalk.green.underline(file)}@${i}.`);
 
       // Hashfinder
       let message, hash
@@ -55,6 +57,7 @@ const parser = async function kodeParser(file) {
         lineNumber: i,
         line,
         code: text,
+        project,
         message: message.trim(),
       }
 
@@ -69,9 +72,8 @@ const parser = async function kodeParser(file) {
   }
 }
 
-const recursive = async function recursiveFinder(root) {
+const recursive = async function recursiveFinder(root, project) {
   const info = chalk.hex('#aaa')(`searching in ${root}`)
-  // console.log(info)
 
   try {
     let stats = await lstat(root);
@@ -81,7 +83,7 @@ const recursive = async function recursiveFinder(root) {
       let results = paths.map(p => recursive(path.resolve(root, p)))
       return await Promise.all(results)
     } else if (stats.isFile()) {
-      return await parser(root)
+      return await parser(root, project)
     }
 
   } catch(err) {
@@ -120,34 +122,51 @@ const inject = async function hashInjector(arr) {
   return await Promise.all(injected);
 }
 
-program
-  .arguments('<input>')
-  .action(async (input) => {
-    console.log('Start processing your code')
-    const root = path.resolve(input)
-    const result = await recursive(root)
-    const parsed = flatten(result)
-    
-    try {
-      let kodes = await inject(parsed)
+async function readJson() {
+  try {
+    let json = await readFile(configs.KODESMELL_JSON, 'utf-8')
+    return JSON.parse(json);
+
+  } catch(e) {
+    if (e.code === 'ENOENT') {
+      console.error(`cannot run 'Kodesmell' in this project. You should run 'kodesmell init' first.`);
       
-      console.log('We will push results to kodesmell!')
-      let data = await readfile(KODESMELL_CONFIG, 'utf-8')
-      console.log(data)
-      let { KODESMELL_PROJECT_NAME } = JSON.parse(data)
-      createKode({ kodes, project: KODESMELL_PROJECT_NAME })
-    } catch(err) {
-      console.error(`injection failed!`);
-      console.error(err);
+      process.exit(0);
+    } else {
+      console.error(e);
       process.exit(0);
     }
+  }
+}
 
-    // co(function *() {
-    //   let email = yield prompt('email: ');
-    //   let password = yield prompt.password('password: ');
-    //   console.log(email, password)
-    // });
+async function readDB() {
+  try {
+    let json = await readFile(configs.KODESMELL_DB, 'utf-8')
+    return JSON.parse(json);
+  } catch(e) {
+    if (e.code === 'ENOENT') {
+      return { hashes: {} };
+    } else {
+      console.error(e);
+      process.exit(0);
+    }
+  }
+}
 
+/**
+ * [hash]: text
+ */
+program
+  .arguments('<input>')
+  .action(async (inputDir) => {
+    const { project, _v } = await readJson();
+    const { hashes } = await readDB();
+    const root = path.resolve(inputDir)
+    const result = await recursive(root, project)
+    const parsed = flatten(result)
+    const kodes = await inject(parsed)
+    
+    createKodes({ kodes, project })
   })
   .parse(process.argv);
 

@@ -1,15 +1,16 @@
 const { request } = require('graphql-request');
 const ENDPOINT = 'http://localhost:8000/graphql'
 
-async function createKode(input) {
+// ;) 이 코드 돌아봐야겠다 (#3ce7466)
+async function createKodes(payload) {
   let res = await request(
     ENDPOINT,
-    `mutation CreateKode($input: CreateKodeInput) {
-      createKode(input: $input) {
+    `mutation CreateKodes($payload: CreateKodesPayload) {
+      createKodes(payload: $payload) {
         id
       }
     }`,
-    { input }
+    { payload }
   )
   console.log(res)
 }
@@ -29,5 +30,5 @@ async function createProject(input) {
 
 module.exports = {
   createProject,
-  createKode
+  createKodes
 }
