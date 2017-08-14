@@ -47,7 +47,7 @@ async function init() {
 	const name = process.cwd().split(path.sep).pop()
 
 	try {
-		let data = await createProject({ name, kodes: [] })
+		let data = await createProject({ name })
 		await makeKodesmellDir(data.createProject)
 		process.exit();
 	} catch(e) {

@@ -158,8 +158,21 @@ async function readJson() {
   process.stdout.write('\n')
 
   let kodes = await inject(found)
-  
+  let hashColor = chalk.bgRed
+  let formatKode = (kode) => {
+    console.log('\n')
+    console.log(`${hashColor(kode.hash)} ${chalk.gray.underline(kode.fileName + ' @' + kode.lineNumber)}`)
+    console.log(chalk.bold(kode.message))
+    console.log('\n')
+  }
+
+  kodes.map(formatKode)
+  console.log(chalk.inverse('Created Kode!'))
+  console.log('Sending generated \'kodes\' to server...\n')
   await createKodes({ kodes })
-  console.log('Created Kode!')
+  console.log(chalk.inverse('Successfully sent to server!'))
 })()
 
+// [hash] fileName@lineNumber
+// Should handle error cases
+// 
