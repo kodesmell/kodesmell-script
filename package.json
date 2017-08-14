@@ -9,7 +9,7 @@
     "kodesmell": "./index.js"
   },
   "scripts": {
-    "build": "sudo npm install -g"
+    "build": "npm install -g"
   },
   "dependencies": {
     "chalk": "^2.1.0",
