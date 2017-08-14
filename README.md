@@ -18,7 +18,7 @@ A command-line tool for creating Bad code detection
 
 2. Add kodesmell comment to any code that stinks.
   - kodesmell comment should look like this 
-  - `// ;) Should handle error cases`, `// ;) Put this code to configs`
+  - `// ;) Should handle error cases`, `// ;) Put this code to configs` (#fd64eb0)
   - `;)` is the symbol *Kodesmell* uses to detect your sadness.
 
 3. Run `kodesmell run [folder | file]`

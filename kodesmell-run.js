@@ -1,7 +1,7 @@
 const program = require('commander');
 const path = require('path')
 const chalk = require('chalk')
-const fs = require('fs')
+const fs = require('graceful-fs')
 const { flatten } = require('ramda')
 const { promisify } = require('util')
 const crypto = require('crypto')
@@ -40,7 +40,7 @@ const parser = async function kodeParser(file, project) {
       if (where < 3) return false;
 
       const success = chalk.red.bold
-      console.log(`${success('[Smells]')} ${chalk.green.underline(file)}@${i}.`);
+      // console.log(`${success('[Smells]')} ${chalk.green.underline(file)}@${i}.`);
 
       // Hashfinder
       let message, hash
@@ -74,20 +74,23 @@ const parser = async function kodeParser(file, project) {
   }
 }
 
-const recursive = async function recursiveFinder(root, project) {
+async function search(root, project) {
   const info = chalk.hex('#aaa')(`searching in ${root}`)
-
+  
   try {
     let stats = await lstat(root);
-
+    process.stdout.clearLine();
+    process.stdout.cursorTo(0);
+    process.stdout.write(info);
+    
     if (stats.isDirectory()) {
       let paths = await readdir(root)
-      let results = paths.map(p => recursive(path.resolve(root, p)))
+      let results = paths.map(p => search(path.resolve(root, p)))
       return await Promise.all(results)
     } else if (stats.isFile()) {
       return await parser(root, project)
     }
-
+    
   } catch(err) {
     console.error(err);
     process.exit(0);
@@ -141,37 +144,6 @@ async function readJson() {
   }
 }
 
-async function readDB() {
-  try {
-    let json = await readFile(configs.KODESMELL_DB, 'utf-8')
-    return JSON.parse(json);
-  } catch(e) {
-    if (e.code === 'ENOENT') {
-      return { hashes: {} };
-    } else {
-      console.error(e);
-      process.exit(0);
-    }
-  }
-}
-
-/**
- * [hash]: text
- */
-// program
-//   .arguments('<input>')
-//   .action(async (inputDir) => {
-//     const { project, _v } = await readJson();
-//     const { hashes } = await readDB();
-//     const root = path.resolve(inputDir)
-//     const result = await recursive(root, project)
-//     const parsed = flatten(result)
-//     const kodes = await inject(parsed)
-    
-//     createKodes({ kodes, project })
-//   })
-//   .parse(process.argv);
-
 (async function main() {
   const argv = minimist(process.argv.slice(2))
   let source = argv._[0]
@@ -181,7 +153,13 @@ async function readDB() {
   }
 
   source = path.resolve(source)
-  console.log(source)
+  let { project } = await readJson()
+  let found = flatten(await search(source, project))
+  process.stdout.write('\n')
 
+  let kodes = await inject(found)
+  
+  await createKodes({ kodes })
+  console.log('Created Kode!')
 })()
 
