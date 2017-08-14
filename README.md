@@ -5,9 +5,7 @@ A command-line tool for creating Bad code detection
 1. Node.js installed (version 7 >= 0)
 
 # How to install
-1. clone this repository
-2. Run `cd kodesmell-script`
-3. Run `npm build`
+1. Run `npm install -g kodesmell-script` or `yarn install -g kodesmell-script` (if you are using yarn https://yarnpkg.com/lang/en/)
 
 **If you encounter and problems installing Kodesmell. Issue it in https://github.com/kodesmell/kodesmell-script/issues.
 
