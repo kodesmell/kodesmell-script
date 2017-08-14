@@ -4,7 +4,7 @@ const chalk = require('chalk');
 const fs = require('fs')
 const co = require('co')
 const prompt = require('co-prompt')
-const { createProject } = require('./libs/upload')
+const { createProject } = require('./lib/upload')
 const package = require('./package.json')
 
 const { promisify } = require('util')
@@ -15,22 +15,21 @@ const mkdir = promisify(fs.mkdir)
 const rmdir = promisify(fs.rmdir)
 const open = promisify(fs.open)
 
-const { title, error } = require('./libs/constants')
+const { title, error } = require('./lib/constants')
 
-const headline = chalk.green.bold('[Kodesmell] ')
+const headline = chalk.hex('#08f').bold('Kodesmell ')
+const text = chalk.gray
 
-const configs = require('./libs/config.js')
+const configs = require('./lib/config.js')
 
-async function makeKodesmellDir(init) {
-	if (init) {
-		await mkdir(configs.KODESMELL_ROOT);
-	}
-
+async function makeKodesmellDir({ id, name }) {	
+	await mkdir(configs.KODESMELL_ROOT);
 	await writeFile(
 		configs.KODESMELL_JSON, 
 		JSON.stringify(
 			{
-				project: process.cwd().split(path.sep).pop(),
+				project: id,
+				name,
 				_v: package.version
 			}
 		),
@@ -42,40 +41,32 @@ async function makeKodesmellDir(init) {
 
 	console.log(headline + 'Suceessfully inited.')
 	console.log(headline + 'Start with \'kodesmell run\' in this repo')
-	process.exit();
 }
 
 async function init() {
+	const name = process.cwd().split(path.sep).pop()
+
+	try {
+		let { data } = await createProject({ name })
+		await makeKodesmellDir(data)
+		process.exit();
+	} catch(e) {
+		console.error(e);
+		process.exit(0);
+	}
+}
+
+(async function main() {
 	console.log(title('kodesmell init v' + package.version))
 
 	try {
 		let json = await open(configs.KODESMELL_JSON, 'r')
-
-		// Ask re-init and 
-		console.log(headline + 'Project is already inited.')
-		await co(function *() {
-
-			while (true) {
-				let answer = yield prompt('Do you want to re-init Kodesmell on this project (Y/N): ')
-
-				if (answer === 'Y') {
-					makeKodesmellDir()
-					break;
-				}
-
-				if (answer === 'N') {
-					process.exit(0);
-				}
-			}
-
-
-		})
+		console.log('Project is already inited.')
+		process.exit();
 	} catch(e) {
 		if (e.code === 'ENOENT') {
-			makeKodesmellDir(true)
+			init()
 		}
 	}
 
-}
-
-init();
+})()
