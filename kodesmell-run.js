@@ -8,7 +8,9 @@ const crypto = require('crypto')
 const co = require('co')
 const prompt = require('co-prompt')
 
-const { createKodes } = require('./libs/upload')
+const { createKodes } = require('./lib/upload')
+
+const minimist = require('minimist')
 
 const readdir = promisify(fs.readdir)
 const readFile = promisify(fs.readFile)
@@ -21,7 +23,7 @@ const KODESMELL_CONFIG = path.resolve(KODESMELL_ROOT, 'kodesmell.json')
 const KODESMELL_HASHKEY_CACHE = path.resolve(KODESMELL_ROOT, 'kodesmell_hashes.txt')
 const finds = []
 
-const configs = require('./libs/config')
+const configs = require('./lib/config')
 
 const parser = async function kodeParser(file, project) {
   try {
@@ -156,27 +158,30 @@ async function readDB() {
 /**
  * [hash]: text
  */
-program
-  .arguments('<input>')
-  .action(async (inputDir) => {
-    const { project, _v } = await readJson();
-    const { hashes } = await readDB();
-    const root = path.resolve(inputDir)
-    const result = await recursive(root, project)
-    const parsed = flatten(result)
-    const kodes = await inject(parsed)
+// program
+//   .arguments('<input>')
+//   .action(async (inputDir) => {
+//     const { project, _v } = await readJson();
+//     const { hashes } = await readDB();
+//     const root = path.resolve(inputDir)
+//     const result = await recursive(root, project)
+//     const parsed = flatten(result)
+//     const kodes = await inject(parsed)
     
-    createKodes({ kodes, project })
-  })
-  .parse(process.argv);
+//     createKodes({ kodes, project })
+//   })
+//   .parse(process.argv);
 
-// JSON Format
-/**
- * fileName: "",
- * lineNumber: "",
- * code: "",
- * hash,
- * message: ""
- */
+(async function main() {
+  const argv = minimist(process.argv.slice(2))
+  let source = argv._[0]
 
+  if (!source) {
+    source = '.' // Default source is the root.
+  }
+
+  source = path.resolve(source)
+  console.log(source)
+
+})()
 
