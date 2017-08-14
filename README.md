@@ -1,6 +1,9 @@
 # kodesmell-script
 A command-line tool for creating Bad code detection
 
+# Prerequisite
+1. Node.js installed (version 7 >= 0)
+
 # How to install
 1. clone this repository
 2. Run `cd kodesmell-script`
